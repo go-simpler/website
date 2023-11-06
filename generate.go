@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"text/template"
 )
 
@@ -40,7 +41,7 @@ func run() error {
 	sc := bufio.NewScanner(pages)
 	for sc.Scan() {
 		name := sc.Text()
-		f, err := os.Create(name + ".html")
+		f, err := os.Create(filepath.Join("docs", name+".html"))
 		if err != nil {
 			return err
 		}
