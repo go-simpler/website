@@ -25,12 +25,12 @@ var indexTmpl = template.Must(template.New("").Parse(`<!doctype html>
                 <p>A collection of Go packages built with ❤️</p>
             </div>
             <table>
-                {{range . -}}
+                {{- range .}}
                 <tr>
                     <td><a href="{{.Name}}.html">go-simpler.org/{{.Name}}</a></td>
                     <td>{{.Desc}}</td>
                 </tr>
-                {{end}}
+                {{- end}}
             </table>
         </div>
     </body>
