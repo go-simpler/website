@@ -30,10 +30,10 @@ var indexTmpl = template.Must(template.New("").Parse(`<!doctype html>
                 <tr>
                     <th colspan="2">{{.}}</th>
                 </tr>
-                {{- range $.Packages}}
+                {{- range $.Projects}}
                 {{- if eq .Category $category}}
                 <tr>
-                    <td><a href="{{.Name}}.html">go-simpler.org/{{.Name}}</a></td>
+                    <td><a href="{{.Href}}">{{.Name}}</a></td>
                     <td>{{.Desc}}</td>
                 </tr>
                 {{- end}}
@@ -63,7 +63,7 @@ func main() {
 }
 
 func run() error {
-	data, err := os.ReadFile("pages.txt")
+	data, err := os.ReadFile("packages.txt")
 	if err != nil {
 		return err
 	}
@@ -72,49 +72,52 @@ func run() error {
 		return err
 	}
 
-	names := strings.Split(strings.TrimSpace(string(data)), "\n")
-	packages := make([]struct{ Name, Desc, Category string }, len(names))
-	categories := [...]string{"libs", "tools"}
+	packages := strings.Split(strings.TrimSpace(string(data)), "\n")
+	misc := [...]string{"styleguide", "website", ".github"}
+	categories := [...]string{"libs", "tools", "misc"}
+	projects := make([]struct{ Name, Desc, Href, Category string }, len(packages)+len(misc))
 
-	for i, name := range names {
-		err := func() error {
-			resp, err := http.Get("https://api.github.com/repos/go-simpler/" + name)
-			if err != nil {
-				return err
-			}
-			defer resp.Body.Close()
-
-			var v struct {
-				Desc   string   `json:"description"`
-				Topics []string `json:"topics"`
-			}
-			if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
-				return err
-			}
-
-			packages[i].Name = name
-			packages[i].Desc = v.Desc
-
-			switch {
-			case slices.Contains(v.Topics, "library"):
-				packages[i].Category = categories[0]
-			case slices.Contains(v.Topics, "tool"):
-				packages[i].Category = categories[1]
-			default:
-				return fmt.Errorf("%s: no category set", name)
-			}
-
-			f, err := os.Create(name + ".html")
-			if err != nil {
-				return err
-			}
-			defer f.Close()
-
-			return pageTmpl.Execute(f, name)
-		}()
+	for i, name := range packages {
+		desc, topics, err := getRepoInfo(name)
 		if err != nil {
 			return err
 		}
+
+		projects[i].Name = "go-simpler.org/" + name
+		projects[i].Desc = desc
+		projects[i].Href = name + ".html"
+
+		switch {
+		case slices.Contains(topics, "library"):
+			projects[i].Category = categories[0]
+		case slices.Contains(topics, "tool"):
+			projects[i].Category = categories[1]
+		default:
+			return fmt.Errorf("%s: no category set", name)
+		}
+
+		f, err := os.Create(name + ".html")
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		if err := pageTmpl.Execute(f, name); err != nil {
+			return err
+		}
+	}
+
+	for i, name := range misc {
+		desc, _, err := getRepoInfo(name)
+		if err != nil {
+			return err
+		}
+
+		j := len(packages) + i
+		projects[j].Name = "github.com/go-simpler/" + name
+		projects[j].Desc = desc
+		projects[j].Href = "https://github.com/go-simpler/" + name
+		projects[j].Category = categories[2]
 	}
 
 	f, err := os.Create("index.html")
@@ -124,10 +127,28 @@ func run() error {
 	defer f.Close()
 
 	return indexTmpl.Execute(f, struct {
-		Packages   any
+		Projects   any
 		Categories []string
 	}{
-		Packages:   packages,
+		Projects:   projects,
 		Categories: categories[:],
 	})
+}
+
+func getRepoInfo(name string) (desc string, topics []string, _ error) {
+	resp, err := http.Get("https://api.github.com/repos/go-simpler/" + name)
+	if err != nil {
+		return "", nil, err
+	}
+	defer resp.Body.Close()
+
+	var v struct {
+		Desc   string   `json:"description"`
+		Topics []string `json:"topics"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+		return "", nil, err
+	}
+
+	return v.Desc, v.Topics, nil
 }
