@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -25,11 +26,18 @@ var indexTmpl = template.Must(template.New("").Parse(`<!doctype html>
                 <p>A collection of Go packages built with ❤️</p>
             </div>
             <table>
-                {{- range .}}
+                {{- range $_, $category := $.Categories}}
+                <tr>
+                    <th colspan="2">{{.}}</th>
+                </tr>
+                {{- range $.Packages}}
+                {{- if eq .Category $category}}
                 <tr>
                     <td><a href="{{.Name}}.html">go-simpler.org/{{.Name}}</a></td>
                     <td>{{.Desc}}</td>
                 </tr>
+                {{- end}}
+                {{- end}}
                 {{- end}}
             </table>
         </div>
@@ -65,7 +73,8 @@ func run() error {
 	}
 
 	names := strings.Split(strings.TrimSpace(string(data)), "\n")
-	pages := make([]struct{ Name, Desc string }, len(names))
+	packages := make([]struct{ Name, Desc, Category string }, len(names))
+	categories := [...]string{"libs", "tools"}
 
 	for i, name := range names {
 		err := func() error {
@@ -76,14 +85,24 @@ func run() error {
 			defer resp.Body.Close()
 
 			var v struct {
-				Desc string `json:"description"`
+				Desc   string   `json:"description"`
+				Topics []string `json:"topics"`
 			}
 			if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
 				return err
 			}
 
-			pages[i].Name = name
-			pages[i].Desc = v.Desc
+			packages[i].Name = name
+			packages[i].Desc = v.Desc
+
+			switch {
+			case slices.Contains(v.Topics, "library"):
+				packages[i].Category = categories[0]
+			case slices.Contains(v.Topics, "tool"):
+				packages[i].Category = categories[1]
+			default:
+				return fmt.Errorf("%s: no category set", name)
+			}
 
 			f, err := os.Create(name + ".html")
 			if err != nil {
@@ -104,5 +123,11 @@ func run() error {
 	}
 	defer f.Close()
 
-	return indexTmpl.Execute(f, pages)
+	return indexTmpl.Execute(f, struct {
+		Packages   any
+		Categories []string
+	}{
+		Packages:   packages,
+		Categories: categories[:],
+	})
 }
