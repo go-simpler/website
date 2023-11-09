@@ -2,6 +2,7 @@ assert
 check
 env
 errorsx
+goversion
 musttag
 sloggen
 sloglint
