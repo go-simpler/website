@@ -11,47 +11,52 @@ import (
 )
 
 var indexTmpl = template.Must(template.New("").Parse(`<!doctype html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="stylesheet" href="styles.css" />
-        <title>go-simpler.org</title>
-    </head>
+<html lang="en">
 
-    <body>
-        <div id="content">
-            <div class="center">
-                <h2>go-simpler.org</h2>
-                <p>A collection of Go packages built with ❤️</p>
-            </div>
-            <table>
-                {{- range $_, $category := $.Categories}}
-                <tr>
-                    <th colspan="2">{{.}}</th>
-                </tr>
-                {{- range $.Projects}}
-                {{- if eq .Category $category}}
-                <tr>
-                    <td><a href="{{.Href}}">{{.Name}}</a></td>
-                    <td>{{.Desc}}</td>
-                </tr>
-                {{- end}}
-                {{- end}}
-                {{- end}}
-            </table>
-        </div>
-    </body>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>go-simpler.org</title>
+</head>
+
+<body>
+    <header>
+        <h1>go-simpler.org</h1>
+        <p>A collection of Go packages built with ❤️</p>
+    </header>
+
+	<main>
+        <table>
+            {{- range $_, $category := $.Categories}}
+            <tr>
+                <th colspan="2">{{.}}</th>
+            </tr>
+            {{- range $.Projects}}
+            {{- if eq .Category $category}}
+            <tr>
+                <td><a href="{{.Href}}">{{.Name}}</a></td>
+                <td>{{.Desc}}</td>
+            </tr>
+            {{- end}}
+            {{- end}}
+            {{- end}}
+        </table>
+    </main>
+</body>
+
 </html>
 `))
 
 var pageTmpl = template.Must(template.New("").Parse(`<!doctype html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <meta name="go-import" content="go-simpler.org/{{.}} git https://github.com/go-simpler/{{.}}" />
-        <meta http-equiv="refresh" content="0; url=https://pkg.go.dev/go-simpler.org/{{.}}" />
-    </head>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="go-import" content="go-simpler.org/{{.}} git https://github.com/go-simpler/{{.}}" />
+    <meta http-equiv="refresh" content="0; url=https://pkg.go.dev/go-simpler.org/{{.}}" />
+</head>
+
 </html>
 `))
 

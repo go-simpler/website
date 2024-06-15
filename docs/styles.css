@@ -1,21 +1,49 @@
-#content {
-    margin: 0 auto;
+@media (prefers-color-scheme: light) {
+    :root {
+        --fg-color: Black;
+        --bg-color: WhiteSmoke;
+    }
 }
-.center {
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --fg-color: White;
+        --bg-color: #222;
+    }
+}
+
+body {
+    max-width: 650px;
+    margin: 50px auto;
+    padding: 0 10px;
+    font-family: sans-serif;
+    color: var(--fg-color);
+    background-color: var(--bg-color);
+}
+
+header {
     text-align: center;
 }
+
+header>h1 {
+    font-size: 1.5em;
+}
+
+a {
+    color: var(--fg-color);
+}
+
 table {
     margin: 0 auto;
     border-collapse: collapse;
 }
+
 th,
 td {
-    padding: 5px 10px;
-    border-bottom: 1px solid lightgrey;
+    padding: 0.3em 0.5em;
+    border-bottom: 1px solid grey;
 }
+
 td:first-child {
-    border-right: 1px solid lightgrey;
-}
-a {
-    color: black;
+    border-right: 1px solid grey;
 }
