@@ -4,5 +4,6 @@ env
 errorsx
 goversion
 musttag
+queries
 sloggen
 sloglint
