@@ -5,6 +5,6 @@ errorsx
 goversion
 musttag
 queries
-slogctx
 sloggen
 sloglint
+slogutil
